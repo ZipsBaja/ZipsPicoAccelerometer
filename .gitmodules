@@ -1,0 +1,6 @@
+[submodule "lib/sdlib"]
+	path = lib/sdlib
+	url = https://github.com/carlk3/no-OS-FatFS-SD-SPI-RPi-Pico
+[submodule "lib/mpulib"]
+	path = lib/mpulib
+	url = https://github.com/zyoung71/rpi-pico-mpu6050
