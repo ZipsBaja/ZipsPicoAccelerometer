@@ -94,7 +94,7 @@ int main()
 #endif
 
 #if USING_MULTIPLEXING
-	uint8_t pins[] = {MPU0_PIN, MPU1_PIN, MPU2_PIN, MPU3_PIN, MPU0_PIN, MPU5_PIN};
+	uint8_t pins[] = {MPU0_PIN, MPU1_PIN, MPU2_PIN, MPU3_PIN, MPU4_PIN, MPU5_PIN};
 	VirtualMultiplexer multiplex(pins, count_of(pins));
 	multiplex.InitializePins();
 	size_t pin_count = multiplex.GetTotalPins();
@@ -107,10 +107,10 @@ int main()
 #else
 	mpu.CalibrateAcceleration(CALIBRATION_ITERATIONS);
 #endif
-	BEGIN_LOOP();
+
 	card.Mount();
 
-	//BEGIN_LOOP();
+	BEGIN_LOOP();
 	while (1)
 	{
 #if USING_MULTIPLEXING
