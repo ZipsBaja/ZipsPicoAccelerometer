@@ -28,6 +28,7 @@ elseif(PICO_BOARD STREQUAL "pico2")
 add_compile_definitions(USING_PICO_2)
 endif()
 
+add_subdirectory(lib/zipslib)
 add_subdirectory(lib/mpulib)
 add_subdirectory(lib/sdlib/FatFs_SPI build)
 
@@ -37,14 +38,11 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
     pico_stdlib
     haw_mpu6050
     FatFs_SPI
+    ZipsPicoLib
 )
 
 target_include_directories(${CMAKE_PROJECT_NAME} PUBLIC
     include
-    lib/mpulib/include 
-    lib/sdlib/FatFs_SPI/include 
-    lib/sdlib/FatFs_SPI/driver
-    $ENV{PICO_SDK_PATH}/src/rp2_common/hardware_i2c/include
 )
 
 pico_enable_stdio_usb(${CMAKE_PROJECT_NAME} 1)

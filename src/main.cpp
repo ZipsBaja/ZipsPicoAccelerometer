@@ -1,6 +1,6 @@
 #define USING_PRINT 0
 #define USING_MULTIPLEXING 1
-#define USING_ENCRYPTION 0
+#define USING_ENCODING 0
 #define USING_GYRO 0
 
 #define INTERVAL_MS 100
@@ -31,8 +31,7 @@
 #define MPU5_PIN 0
 #endif
 
-
-#if USING_ENCRYPTION
+#if USING_ENCODING
 #define DATA_ENTRY_SIZE 22
 #define VECTOR_ENTRY_SIZE 12
 #define TIME_ENTRY_SIZE 8
@@ -50,7 +49,7 @@ using namespace uazips;
 
 int main()
 {
-#if USING_ENCRYPTION
+#if USING_ENCODING
 	// Vector size + Time size + Pin number size + Data Spacer should not be greater than the total size each write.
 	if ((VECTOR_ENTRY_SIZE + TIME_ENTRY_SIZE + PIN_ENTRY_SIZE + SPACER_ENTRY_SIZE) > DATA_ENTRY_SIZE)
 	{
@@ -87,7 +86,7 @@ int main()
 	SDCard card("0:", spi1, SD_CARD_RX_PIN, SD_CARD_TX_PIN, SD_CARD_SCK_PIN, SD_CARD_CS_PIN);
 	TimeHandler th;
 
-#if USING_ENCRYPTION
+#if USING_ENCODING
 	const char* file_name = "acceleration.raw";
 #else
 	const char* file_name = "acceleration.txt";
@@ -95,10 +94,13 @@ int main()
 
 #if USING_MULTIPLEXING
 	uint8_t pins[] = {MPU0_PIN, MPU1_PIN, MPU2_PIN, MPU3_PIN, MPU4_PIN, MPU5_PIN};
+
 	VirtualMultiplexer multiplex(pins, count_of(pins));
 	multiplex.InitializePins();
+
 	size_t pin_count = multiplex.GetTotalPins();
 	Vec3f offsets[pin_count];
+
 	for (int i = 0; i < pin_count; i++)
 	{
 		multiplex.SetHighByIndex(i);
@@ -117,8 +119,10 @@ int main()
 		for (uint8_t i = 0; i < pin_count; i++) // i is the current high pin.
 		{
 			multiplex.SetHighByIndex(i);
+			uint8_t pin = multiplex.GetPinByIndex(i);
 #else
 			uint8_t i = 0;
+			uint8_t pin = 0;
 #endif
 			card.OpenFile(file_name);
 
@@ -134,30 +138,22 @@ int main()
 #endif
 			uint64_t time = th.GetElapsed();
 
-			float accel[3] = {v.x, v.y, v.z};
-
 			LOG("Acceleration in m/s^2: <%f, %f, %f>\n", v.x, v.y, v.z);
 
-#if USING_ENCRYPTION
-			uint8_t block[DATA_ENTRY_SIZE];
-
+#if USING_ENCODING
+			float accel[3] = {v.x, v.y, v.z};
 			const size_t vect_size = sizeof(accel);
+			uint8_t block[DATA_ENTRY_SIZE];
 			memcpy(block, accel, vect_size);
 			memcpy(block + vect_size, &time, sizeof(time));
-#if USING_MULTIPLEXING
-			block[DATA_ENTRY_SIZE - (PIN_ENTRY_SIZE + SPACER_ENTRY_SIZE)] = multiplex.GetPinByIndex(i);
-#else
-			block[DATA_ENTRY_SIZE - (PIN_ENTRY_SIZE + SPACER_ENTRY_SIZE)] = 0;
-#endif
+			block[DATA_ENTRY_SIZE - (PIN_ENTRY_SIZE + SPACER_ENTRY_SIZE)] = pin;
 			block[DATA_ENTRY_SIZE - SPACER_ENTRY_SIZE] = 0xFF; // Spacer byte used for separating data entries.
 
 			card.WriteBuff(block, DATA_ENTRY_SIZE);
 #else
-			char pre[256] = "Acceleration vector at hardware time ";
-			char str[256 - 64];
-			sprintf(str, "%i: <%f, %f, %f> on pin number: %i\n", time, v.x, v.y, v.z, i);
-			strcat(pre, str);
-			card.WriteString(pre);
+			char str[256];
+			sprintf(str, "Acceleration vector at hardware time %i: <%f, %f, %f> on pin number: %i\n", time, v.x, v.y, v.z, pin);
+			card.WriteString(str);
 #endif
 			card.Close();
 #if USING_MULTIPLEXING
